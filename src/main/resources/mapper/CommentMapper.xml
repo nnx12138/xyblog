@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lx.blog.dao.CommentDao">
+
+    <resultMap id="commentVoResultMap" type="com.lx.blog.vo.CommentVo">
+        <association property="commentEntity">
+            <id column="cid" property="id"></id>
+            <result column="uid" property="uid"></result>
+            <result column="entity_Type" property="entityType"></result>
+            <result column="entity_Id" property="entityId"></result>
+            <result column="target_Id" property="targetId"></result>
+            <result column="statu" property="statu"></result>
+            <result column="create_Time" property="createTime"></result>
+            <result column="content" property="content"></result>
+            <result column="targetName" property="targetName"></result>
+        </association>
+        <association property="user">
+            <id column="userId" property="id"/>
+            <result column="username" property="username"/>
+            <result column="head_Url" property="headUrl"/>
+        </association>
+    </resultMap>
+
+    <select id="selectCommentListTid" resultMap="commentVoResultMap">
+                SELECT
+                    c.*, u.*, u.id AS userId,
+                    c.id AS cid,
+                  tu.username as targetName
+                FROM
+                    t_comment c
+                LEFT JOIN t_user u ON (c.uid = u.id)
+                left join t_user tu on (tu.id = c.target_id)
+                WHERE
+                    c.entity_type = #{type}
+                AND c.entity_id = #{tid}
+                ORDER BY
+                    c.create_time DESC
+    </select>
+    <select id="getCommentCountByTopicId" resultType="java.lang.Long">
+        select count(1) from t_comment c where c.entity_type = #{type} and c.entity_id = #{id};
+    </select>
+    <select id="findBlogCommentList" parameterType="Map" resultType="com.lx.blog.entity.CommentEntity">
+        select *
+        from t_comment
+        where statu =1
+        <if test="id!=null">
+            AND id = #{id}
+        </if>
+        order by id desc
+        <if test="start!=null and limit!=null">
+            limit #{start},#{limit}
+        </if>
+    </select>
+    <select id="getTotalBlogComments" parameterType="Map" resultType="int">
+        select count(*) from t_comment
+        where statu=1
+        <if test="id!=null">
+            AND id = #{id}
+        </if>
+
+    </select>
+    <delete id="deleteBatch">
+        delete from t_comment
+        where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>
